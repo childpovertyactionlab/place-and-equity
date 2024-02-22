@@ -1,0 +1,11 @@
+System,Area,Metric,Measure,PeerMedian,BestPeer,Dallas,DallasRank,Ranked
+Human Development,Healthy Family and Individuals,Health Index,Z,-0.018465409549156625,-0.46372244880818,0.30101244493303403,9,10
+Human Development,Healthy Family and Individuals,Life Expectancy,%,NA,NA,NA,NA,NA
+Human Development,Healthy Family and Individuals,Uninsured Population,%,0.12803021956401983,0.03414772761624919,0.23532824259567206,10,11
+Human Development,Housing Quality and Affordability,Overcrowded Housing (More than 1 occupant per room),%,0.05027845480152611,0.017542702341372455,0.061990187029763194,7,11
+Human Development,Housing Quality and Affordability,Rent Burden ( > 30% of income),%,0.5940843663124673,0.5332899816553952,0.572905472644886,4,9
+Human Development,Housing Quality and Affordability,Unhoused Rates,%,0.003263003962658441,0.0014240591084693193,0.003263003962658441,6,11
+Human Development,Transportation,Percent commuting by private transit,%,0.7258876101978982,0.8331174007102539,0.8070828233949727,3,9
+Human Development,Transportation,Percent commuting by public transit,%,0.0174763335902788,0.1440170595518784,0.012809181359357531,8,9
+Human Development,Transportation,Percent of private transit commutes longer than 45 min,%,0.14527362749253822,0.1399121082333436,0.14527362749253822,5,9
+Human Development,Transportation,Percent of public transit commutes longer than 45 min,%,0.4362657091561939,0.2495169748826939,0.37100060576022914,3,9

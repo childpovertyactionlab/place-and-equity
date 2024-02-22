@@ -1,0 +1,11 @@
+System,Area,Metric,Measure,Geography
+Human Development,Housing Quality and Affordability,Overcrowded Housing (More than 1 occupant per room),%,Tract
+Human Development,Housing Quality and Affordability,Rent Burden ( > 30% of income),%,PUMA
+Human Development,Housing Quality and Affordability,Unhoused Rates,%,CSA
+Human Development,Healthy Family and Individuals,Uninsured Population,%,Tract
+Human Development,Healthy Family and Individuals,Life Expectancy,%,Tract
+Human Development,Healthy Family and Individuals,Health Index,Z,Tract
+Human Development,Transportation,Percent of public transit commutes longer than 45 min,%,PUMA
+Human Development,Transportation,Percent of private transit commutes longer than 45 min,%,PUMA
+Human Development,Transportation,Percent commuting by public transit,%,PUMA
+Human Development,Transportation,Percent commuting by private transit,%,PUMA
