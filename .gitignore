@@ -1,2 +1,5 @@
 *.dat
 *.Rdata
+.Rproj.user
+
+/.quarto/

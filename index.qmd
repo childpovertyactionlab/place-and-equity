@@ -369,6 +369,7 @@ bounds <- as.vector(sf::st_bbox(dallas_tracts))
                     <!-- <li><a href="#" class="link-dark d-inline-flex text-decoration-none rounded">Race/ethnicity</a></li> -->
                     <!-- <li><a href="#" class="link-dark d-inline-flex text-decoration-none rounded">Language spoken at home</a></li> -->
                     <div class="list-group">
+                      
                       <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
                         <div class="button-content" id="pop">
                           <span class="left-content">Population</span>
@@ -377,7 +378,8 @@ bounds <- as.vector(sf::st_bbox(dallas_tracts))
                           </span>
                         </div>
                       </a>
-                      <a href="#" class="list-group-item list-group-item-action" aria-expanded="false" data-bs-toggle="collapse">
+                      
+                      <a href="#raceDetails" class="list-group-item list-group-item-action" aria-expanded="false" data-bs-toggle="collapse">
                         <div class="button-content" id="race">
                           <span class="left-content">Race/ethnicity...</span>
                           <div class="button-content-details" id="raceDetails">
@@ -404,10 +406,11 @@ bounds <- as.vector(sf::st_bbox(dallas_tracts))
                           </div>
                         </div>
                       </a>
-                      <a href="#" class="list-group-item list-group-item-action" aria-expanded="false" data-toggle="list" data-bs-toggle="collapse">
+                      
+                      <a href="#langDetails" class="list-group-item list-group-item-action" aria-expanded="false" data-toggle="list" data-bs-toggle="collapse">
                         <div class="button-content" id="lang">
                           <span class="left-content">Primary language spoken at home...</span>
-                          <div class="button-content-details">
+                          <div class="button-content-details" id="langDetails">
                             <hr>
                             <span class="left-content-indent">English</span>
                             <span class="right-content">60%</span>
@@ -541,23 +544,46 @@ leaflet(data = dallas_tracts,
   # Layers control
   addLayersControl(
     baseGroups = c("none", "pop", "race")
-  ) 
-  # %>%
-  # htmlwidgets::onRender("
-  #   function() {
-  #     var map-overview = this;
-  #     var legends = map-overview.controls._controlsById;
-  #     function addActualLegend() {
-  #       var sel = $('.leaflet-control-layers-base').find('input[type=\"radio\"]:checked').siblings('span').text().trim();
-  #       $.each(map-overview.controls._controlsById, function(nm) {
-  #         map-overview.removeControl(map-overview.controls.get(nm));
-  #       });
-  #       map-overview.addControl(legends[sel]);
-  #     }
-  #     $('.leaflet-control-layers-base').on('click', addActualLegend);
-  #     addActualLegend();
-  #   }
-  # ")
+  ) %>% 
+  htmlwidgets::onRender("
+    function(el, x) {
+      var map_overview = this;
+
+      function toggleLayer(layerName) {
+        var input = $(map_overview.getContainer()).find('.leaflet-control-layers-selector').filter(function() {
+          return $(this).next('span').text().trim() === layerName;
+        });
+      
+        if(input.length) {
+          input[0].click();
+        }
+      };
+      
+      $('#pop').on('click', function() {
+        console.log('Pop clicked');
+        toggleLayer('pop');
+      });
+      
+      $('#race').on('click', function() {
+        console.log('Race clicked');
+        toggleLayer('race');
+      });
+      
+      $('#lang').on('click', function() {
+        console.log('Lang clicked');
+        toggleLayer('lang');
+      });
+      
+      $('.info.legend.leaflet-control').hide();
+      map_overview.on('overlayadd', function(eventLayer) {
+        if (eventLayer.name === 'race') {
+            $('.info.legend.leaflet-control').show();
+        } else {
+            $('.info.legend.leaflet-control').hide();
+        }
+      });
+    }
+  ")
 ```
   
   
@@ -570,100 +596,131 @@ leaflet(data = dallas_tracts,
         
         <div class="grid" style="--bs-columns: 3;">
           <div class="g-col-1">
-            <h2 class="slim" id="metrics">Metrics</h2>
-            <!-- <div class="accordion" id="metrics"> -->
-            <!--   <div class="accordion-item"> -->
-            <!--     <b class="accordion-header"> -->
-            <!--       <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#human-development" aria-expanded="true" aria-controls="human-development"> -->
-            <!--         Human Development -->
-            <!--       </button> -->
-            <!--     </b> -->
-            <!--     <div id="human-development" class="accordion-collapse collapse show" data-bs-parent="#metrics"> -->
-            <!--       <div class="accordion-body"> -->
-            <!--         <div class="list-group"> -->
-            <!--           <a href="#human-development" class="list-group-item list-group-item-action" aria-expanded="false" onclick="toggleContent(this)"> -->
-            <!--             <div class="button-content" id="housing-quality-and-affordability"> -->
-            <!--               <span class="left-content">Housing quality & affordability</span> -->
-            <!--               <span class="right-content"> -->
-            <!--                 `r scales::comma(acs_place$pop_total[1])` -->
-            <!--               </span> -->
-            <!--             </div> -->
-            <!--           </a> -->
-            <!--           <a href="#human-development" class="list-group-item list-group-item-action" aria-expanded="false" onclick="toggleContent(this)"> -->
-            <!--             <div class="button-content" id="healthy-family-and-individuals"> -->
-            <!--               <span class="left-content">Healthy family and individuals</span> -->
-            <!--               <div class="button-content-details"> -->
-            <!--                 <hr> -->
-            <!--                 <span class="left-content-indent">White</span> -->
-            <!--                 <span class="right-content"> -->
-            <!--                   `r scales::percent(acs_place$poppct_white[1])` -->
-            <!--                 </span> -->
-            <!--                 <br> -->
-            <!--                 <span class="left-content-indent">Black</span> -->
-            <!--                 <span class="right-content"> -->
-            <!--                   `r scales::percent(acs_place$poppct_black[1])` -->
-            <!--                 </span> -->
-            <!--                 <br> -->
-            <!--                 <span class="left-content-indent">Hispanic/Latino</span> -->
-            <!--                 <span class="right-content"> -->
-            <!--                   `r scales::percent(acs_place$poppct_latino[1])` -->
-            <!--                 </span> -->
-            <!--                 <br> -->
-            <!--                 <span class="left-content-indent">Asian</span> -->
-            <!--                 <span class="right-content"> -->
-            <!--                   `r scales::percent(acs_place$poppct_asian[1])` -->
-            <!--                 </span> -->
-            <!--               </div> -->
-            <!--             </div> -->
-            <!--           </a> -->
-            <!--           <a href="#" class="list-group-item list-group-item-action" aria-expanded="false" onclick="toggleContent(this)"> -->
-            <!--             <div class="button-content" id="lang"> -->
-            <!--               <span class="left-content">Primary language spoken at home...</span> -->
-            <!--               <div class="button-content-details"> -->
-            <!--                 <hr> -->
-            <!--                 <span class="left-content-indent">English</span> -->
-            <!--                 <span class="right-content">60%</span> -->
-            <!--                 <br> -->
-            <!--                 <span class="left-content-indent">Spanish</span> -->
-            <!--                 <span class="right-content">30%</span> -->
-            <!--                 <br> -->
-            <!--                 <span class="left-content-indent">Vietnamese</span> -->
-            <!--                 <span class="right-content">5%</span> -->
-            <!--                 <br> -->
-            <!--                 <span class="left-content-indent">Other</span> -->
-            <!--                 <span class="right-content">5%</span> -->
-            <!--               </div> -->
-            <!--             </div> -->
-            <!--           </a> -->
-            <!--         </div> -->
-            <!--       </div> -->
-            <!--     </div> -->
-            <!--   </div> -->
-            <!--   <div class="accordion-item"> -->
-            <!--     <b class="accordion-header"> -->
-            <!--       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#indicators" aria-expanded="false" aria-controls="indicators"> -->
-            <!--         Indicators -->
-            <!--       </button> -->
-            <!--     </b> -->
-            <!--     <div id="indicators" class="accordion-collapse collapse" data-bs-parent="#overview"> -->
-            <!--       <div class="accordion-body"> -->
-            <!--         <strong>This is the second item's accordion body.</strong> It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow. -->
-            <!--       </div> -->
-            <!--     </div> -->
-            <!--   </div> -->
-            <!--   <div class="accordion-item"> -->
-            <!--     <b class="accordion-header"> -->
-            <!--       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree"> -->
-            <!--         Accordion Item #3 -->
-            <!--       </button> -->
-            <!--     </b> -->
-            <!--     <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#overview"> -->
-            <!--       <div class="accordion-body"> -->
-            <!--         <strong>This is the third item's accordion body.</strong> It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow. -->
-            <!--       </div> -->
-            <!--     </div> -->
-            <!--   </div> -->
-            <!-- </div> -->
+            <h2 class="slim" id="human-development">Human Development</h2>
+            <div class="accordion" id="human-development">
+              <div class="accordion-item">
+                <b class="accordion-header">
+                  <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#hqa" aria-expanded="true" aria-controls="hqa">
+                    Housing Quality and Affordability
+                  </button>
+                </b>
+                <div id="hqa" class="accordion-collapse collapse show" data-bs-parent="#human-development">
+                  <div class="accordion-body">
+                      
+                    <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
+                      <div class="button-content" id="overcrowded-housing">
+                        <span>Overcrowded housing</span>
+                      </div>
+                    </a>
+                    
+                    <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
+                      <div class="button-content" id="rent-burden">
+                        <span class="left-content">Rent burden</span>
+                        <!-- <span class="right-content"> -->
+                        </span>
+                      </div>
+                    </a>
+                    
+                    <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
+                      <div class="button-content" id="unhoused-rates">
+                        <span class="left-content">Unhoused rates</span>
+                        <!-- <span class="right-content"> -->
+                        </span>
+                      </div>
+                    </a>
+                      
+                  </div>
+                </div>
+              </div>
+              <div class="accordion-item">
+                <b class="accordion-header">
+                  <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#hfi" aria-expanded="true" aria-controls="hfi">
+                    Healthy Family & Individuals
+                  </button>
+                </b>
+                <div id="hfi" class="accordion-collapse collapse" data-bs-parent="#human-development">
+                  <div class="accordion-body">
+                      
+                    <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
+                      <div class="button-content" id="uninsured-population">
+                        <span class="left-content">Uninsured population</span>
+                        <!-- <span class="right-content"> -->
+                        </span>
+                      </div>
+                    </a>
+                    
+                    <a href="#" class="list-group-item list-group-item-action disabled" aria-expanded="false" aria-disabled="true">
+                      <div class="button-content" id="life-expectancy">
+                        <span class="left-content">Life expectancy</span>
+                        <!-- <span class="right-content"> -->
+                        </span>
+                      </div>
+                    </a>
+                    
+                    <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
+                      <div class="button-content" id="health-index">
+                        <span class="left-content">Health index</span>
+                        <!-- <span class="right-content"> -->
+                        </span>
+                      </div>
+                    </a>
+                    
+                  </div>
+                </div>
+              </div>
+              <div class="accordion-item">
+                <b class="accordion-header">
+                  <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#trn" aria-expanded="true" aria-controls="trn">
+                    Transportation
+                  </button>
+                </b>
+                <div id="trn" class="accordion-collapse collapse" data-bs-parent="#human-development">
+                  <div class="accordion-body">
+                      
+                    <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
+                      <div class="button-content" id="pub-commute-long">
+                        <span class="left-content">Long public commute</span>
+                        <!-- <span class="right-content"> -->
+                        </span>
+                      </div>
+                    </a>
+                    
+                    <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
+                      <div class="button-content" id="priv-commute-long">
+                        <span class="left-content">Long private commute</span>
+                        <!-- <span class="right-content"> -->
+                        </span>
+                      </div>
+                    </a>
+                    
+                    <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
+                      <div class="button-content" id="pub-commute">
+                        <span class="left-content">Public commuters</span>
+                        <!-- <span class="right-content"> -->
+                        </span>
+                      </div>
+                    </a>
+                    
+                    <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
+                      <div class="button-content" id="priv-commute">
+                        <span class="left-content">Private commuters</span>
+                        <!-- <span class="right-content"> -->
+                        </span>
+                      </div>
+                    </a>
+                    
+                    <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
+                      <div class="button-content" id="no-vehicle">
+                        <span class="left-content">Households with no vehicle</span>
+                        <!-- <span class="right-content"> -->
+                        </span>
+                      </div>
+                    </a>
+                    
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="g-col-2">
             <div class="card box-of-map">
@@ -706,7 +763,7 @@ leaflet(data = dallas_smallgeo,
   ) %>%
   
   addPolygons(
-    group = metrics$Metric[[1]],
+    group = "overcrowded-housing",
     data = metrics$sdf[[1]],
     fillColor = ~colorNumeric(palette = palette_cpal_teal, domain = c(0, max(metrics$sdf[[1]]$all, na.rm = TRUE) ))(all),
     fillOpacity = ~0.6 * (all - min(metrics$sdf[[1]]$all, na.rm = TRUE)) / max(metrics$sdf[[1]]$all, na.rm = TRUE) + 0.2, 
@@ -723,7 +780,7 @@ leaflet(data = dallas_smallgeo,
   ) %>%
   
   addPolygons(
-    group = metrics$Metric[[2]],
+    group = "rent-burden",
     data = metrics$sdf[[2]],
     fillColor = ~colorNumeric(palette = palette_cpal_magenta, domain = c(0, max(metrics$sdf[[2]]$all, na.rm = TRUE) ))(all),
     fillOpacity = ~0.6 * (all - min(metrics$sdf[[2]]$all, na.rm = TRUE)) / max(metrics$sdf[[2]]$all, na.rm = TRUE) + 0.2,
@@ -740,7 +797,7 @@ leaflet(data = dallas_smallgeo,
   ) %>%
 
   addPolygons(
-    group = metrics$Metric[[3]],
+    group = "unhoused-rates",
     data = metrics$sdf[[3]],
     fillColor = ~colorNumeric(palette = palette_cpal_yellow, domain = c(0, max(metrics$sdf[[3]]$all, na.rm = TRUE) ))(all),
     fillOpacity = ~0.6 * (all - min(metrics$sdf[[3]]$all, na.rm = TRUE)) / max(metrics$sdf[[3]]$all, na.rm = TRUE) + 0.2,
@@ -757,7 +814,7 @@ leaflet(data = dallas_smallgeo,
   ) %>%
   
   addPolygons(
-    group = metrics$Metric[[4]],
+    group = "uninsured-population",
     data = metrics$sdf[[4]],
     fillColor = ~colorNumeric(palette = palette_cpal_green, domain = c(0, max(metrics$sdf[[4]]$all, na.rm = TRUE) ))(all),
     fillOpacity = ~0.6 * (all - min(metrics$sdf[[4]]$all, na.rm = TRUE)) / max(metrics$sdf[[4]]$all, na.rm = TRUE) + 0.2,
@@ -792,7 +849,7 @@ leaflet(data = dallas_smallgeo,
   
     
   addPolygons(
-    group = metrics$Metric[[6]],
+    group = "health-index",
     data = metrics$sdf[[6]],
     fillColor = ~colorNumeric(palette = palette_cpal_purple, domain = c(min(metrics$sdf[[6]]$all, na.rm = TRUE), max(metrics$sdf[[6]]$all, na.rm = TRUE) ), na.color = "#a4a6ab")(all),
     fillOpacity = ~ 0.6 * ((all - min(metrics$sdf[[6]]$all, na.rm = TRUE)) / max(metrics$sdf[[6]]$all, na.rm = TRUE)) + 0.2,
@@ -811,7 +868,7 @@ leaflet(data = dallas_smallgeo,
   ) %>%
 
   addPolygons(
-    group = metrics$Metric[[7]],
+    group = "pub-commute-long",
     data = metrics$sdf[[7]],
     fillColor = ~colorNumeric(palette = palette_cpal_purple, domain = c(min(metrics$sdf[[7]]$all, na.rm = TRUE), max(metrics$sdf[[7]]$all, na.rm = TRUE) ), na.color = "#a4a6ab")(all),
     fillOpacity = ~ 0.6 * ((all - min(metrics$sdf[[7]]$all, na.rm = TRUE)) / max(metrics$sdf[[7]]$all, na.rm = TRUE)) + 0.2,
@@ -828,7 +885,7 @@ leaflet(data = dallas_smallgeo,
   ) %>%
   
   addPolygons(
-    group = metrics$Metric[[8]],
+    group = "priv-commute-long",
     data = metrics$sdf[[8]],
     fillColor = ~colorNumeric(palette = palette_cpal_purple, domain = c(min(metrics$sdf[[8]]$all, na.rm = TRUE), max(metrics$sdf[[8]]$all, na.rm = TRUE) ), na.color = "#a4a6ab")(all),
     fillOpacity = ~ 0.6 * ((all - min(metrics$sdf[[8]]$all, na.rm = TRUE)) / max(metrics$sdf[[8]]$all, na.rm = TRUE)) + 0.2,
@@ -845,7 +902,7 @@ leaflet(data = dallas_smallgeo,
   ) %>%
   
   addPolygons(
-    group = metrics$Metric[[9]],
+    group = "pub-commute",
     data = metrics$sdf[[9]],
     fillColor = ~colorNumeric(palette = palette_cpal_purple, domain = c(min(metrics$sdf[[9]]$all, na.rm = TRUE), max(metrics$sdf[[9]]$all, na.rm = TRUE) ), na.color = "#a4a6ab")(all),
     fillOpacity = ~ 0.6 * ((all - min(metrics$sdf[[9]]$all, na.rm = TRUE)) / max(metrics$sdf[[9]]$all, na.rm = TRUE)) + 0.2,
@@ -862,7 +919,7 @@ leaflet(data = dallas_smallgeo,
   ) %>%
   
   addPolygons(
-    group = metrics$Metric[[10]],
+    group = "priv-commute",
     data = metrics$sdf[[10]],
     fillColor = ~colorNumeric(palette = palette_cpal_purple, domain = c(min(metrics$sdf[[10]]$all, na.rm = TRUE), max(metrics$sdf[[10]]$all, na.rm = TRUE) ), na.color = "#a4a6ab")(all),
     fillOpacity = ~ 0.6 * ((all - min(metrics$sdf[[10]]$all, na.rm = TRUE)) / max(metrics$sdf[[10]]$all, na.rm = TRUE)) + 0.2,
@@ -883,24 +940,64 @@ leaflet(data = dallas_smallgeo,
 
   # Layers control
   addLayersControl(
-    baseGroups = c("None", metrics$Metric)
-  ) 
-# %>%
-#   htmlwidgets::onRender("
-#     function() {
-#       var map-metrics = this;
-#       var legends = map-metrics.controls._controlsById;
-#       function addActualLegend() {
-#         var sel = $('.leaflet-control-layers-base').find('input[type=\"radio\"]:checked').siblings('span').text().trim();
-#         $.each(map-metrics.controls._controlsById, function(nm) {
-#           map-metrics.removeControl(map-metrics.controls.get(nm));
-#         });
-#         map-metrics.addControl(legends[sel]);
-#       }
-#       $('.leaflet-control-layers-base').on('click', addActualLegend);
-#       addActualLegend();
-#     }
-# ")
+    baseGroups = c("None", "overcrowded-housing", "rent-burden", "unhoused-rates", "uninsured-population", "life-expectancy", "health-index", "pub-commute-long", "priv-commute-long", "pub-commute", "priv-commute", "no-vehicle", metrics$Metric)
+  ) %>%
+  htmlwidgets::onRender(paste0("
+    function(el, x) {
+      var map_metrics = this;
+
+      function toggleLayer(layerName) {
+        var input = $(map_metrics.getContainer()).find('.leaflet-control-layers-selector').filter(function() {
+          return $(this).next('span').text().trim() === layerName;
+        });
+
+        if(input.length) {
+          input[0].click();
+        }
+      };
+
+      $('#overcrowded-housing').on('click', function() {
+        toggleLayer('overcrowded-housing');
+      });
+
+      $('#rent-burden').on('click', function() {
+        toggleLayer('rent-burden');
+      });
+
+      $('#unhoused-rates').on('click', function() {
+        toggleLayer('unhoused-rates');
+      });
+
+      $('#uninsured-population').on('click', function() {
+        toggleLayer('uninsured-population');
+      });
+
+      $('#health-index').on('click', function() {
+        toggleLayer('health-index');
+      });
+
+      $('#pub-commute-long').on('click', function() {
+        toggleLayer('pub-commute-long');
+      });
+
+      $('#priv-commute-long').on('click', function() {
+        toggleLayer('priv-commute-long');
+      });
+
+      $('#pub-commute').on('click', function() {
+        toggleLayer('pub-commute');
+      });
+
+      $('#priv-commute').on('click', function() {
+        toggleLayer('priv-commute');
+      });
+
+      $('#no-vehicle').on('click', function() {
+        toggleLayer('no-vehicle');
+      });
+
+    }
+  "))
 
 ```
   

@@ -282,7 +282,9 @@ HD_HQA_overcrowded_housing_place <- get_acs(
            Measure = "%",
            Source = "ACS 5-year",
            Year = 2022,
-           BiggerBetter = 0
+           BiggerBetter = 0,
+           Name = "Overcrowded housing",
+           Id = "overcrowded-housing"
     ); join_list <- unique(c(join_list, list(HD_HQA_overcrowded_housing_place)))
 
 
@@ -350,7 +352,9 @@ HD_HQA_overcrowded_housing_tract <- get_acs(
          Measure = "%",
          Source = "ACS 5-year",
          Year = 2022,
-         BiggerBetter = 0
+         BiggerBetter = 0,
+         Name = "Overcrowded housing",
+         Id = "overcrowded-housing"
   ); join_list <- unique(c(join_list, list(HD_HQA_overcrowded_housing_tract)))
 
 
@@ -408,7 +412,9 @@ HD_HQA_rent_burden_place_0 <- pums %>%
          Measure = "%",
          Source = "PUMS",
          Year = 2022,
-         BiggerBetter = 0
+         BiggerBetter = 0,
+         Name = "Rent burden",
+         Id = "rent-burden"
   ); join_list <- unique(c(join_list, list(HD_HQA_rent_burden_place)))
 
 
@@ -1471,7 +1477,9 @@ HD_FS_pct_SNAP <- get_acs(
          Metric = "Percent of Households Receiving SNAP",
          Measure = "%",
          Source = "ACS 5-year",
-         Year = 2022)
+         Year = 2022,
+         Name = "",
+         Id = "")
 
 HD_AOGS <- NULL # no data
 

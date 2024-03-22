@@ -78,7 +78,7 @@ $link-color:                $success !default;
 $font-family-sans-serif:      Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol" !default;
 $headings-font-weight:        600 !default;
 $font-family-monospace:       'Fira Code' !default;
-$headings-font-family:         Poppins !default;
+$headings-font-family:         Poppins, $font-family-sans-serif !default;
 
 // Default Enable
 

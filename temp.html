@@ -1,0 +1,13 @@
+    function(el, x) {
+      var map = this;
+      console.log(map);
+      
+      function toggleLayer(layerName) {
+        var input = $(map.getContainer()).find('.leaflet-control-layers-selector').filter(function() {
+          return $(this).next('span').text().trim() === layerName;
+        });l
+      
+        if(input.length) {
+          input[0].click();
+        }
+      }

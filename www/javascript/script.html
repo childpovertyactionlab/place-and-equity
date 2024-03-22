@@ -49,6 +49,16 @@
     addHoverEffect();
   });
   
+  document.ready(function() {
+    ('.list-group-item-action').on('click', function() {
+      const group = this.closest('.list-group');
+      console.log(group)
+      const target = this.attr('href');
+  
+      group.find('.collapse').not(target).collapse('hide');
+    });
+  });
+  
   document.addEventListener('DOMContentLoaded', function() {
     // Function to hide all g-col-8 divs
     function hideAllCols() {
