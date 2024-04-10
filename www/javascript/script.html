@@ -1,87 +1,71 @@
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+
 <script>
-  function addHoverEffect() {
-    const links = document.querySelectorAll('.grid-link');
-    const infos = document.querySelectorAll('.info');
 
-    links.forEach(link => {
-      link.addEventListener('mouseover', () => handleHover(link, true));
-      link.addEventListener('mouseout', () => handleHover(link, false));
-    });
-
-    infos.forEach(info => {
-      info.addEventListener('mouseover', () => handleHover(info, true));
-      info.addEventListener('mouseout', () => handleHover(info, false));
-    });
-
-    function handleHover(element, isHover) {
-      const linkId = element.getAttribute('id');
-      const associatedLink = document.querySelector(`.grid-link[id="${linkId}"]`);
-      const associatedInfo = document.querySelector(`.info[id="${linkId}"]`);
-
-      if (isHover) {
-        associatedLink && associatedLink.classList.add('hovered');
-        associatedInfo && associatedInfo.classList.add('hovered');
-      } else {
-        associatedLink && associatedLink.classList.remove('hovered');
-        associatedInfo && associatedInfo.classList.remove('hovered');
-      }
-    }
-  }
-
-  function addClickHandlers() {
-    const infos = document.querySelectorAll('.info');
-
-    infos.forEach(info => {
-        info.addEventListener('click', () => {
-            window.location.href = info.getAttribute('href');
+  $(document).ready(function() {
+    // Hover Effect
+    function addHoverEffect() {
+      $('.grid-link, .info').hover(function() { // Mouseover 
+          handleHover($(this), true);
+        }, function() { // Mouseout
+          handleHover($(this), false);
         });
-    });
-  }
+    }
   
-
-  window.addEventListener('DOMContentLoaded', (event) => {
-      addHoverEffect();
-      addClickHandlers();
-  });
-
-
-  window.addEventListener('DOMContentLoaded', (event) => {
-    addHoverEffect();
-  });
+    function handleHover(element, isHover) {
+      const linkId = element.attr('id');
+      const associatedLink = $('.grid-link[id="' + linkId + '"]');
+      const associatedInfo = $('.info[id="' + linkId + '"]');
   
-  document.ready(function() {
-    ('.list-group-item-action').on('click', function() {
-      const group = this.closest('.list-group');
-      console.log(group)
-      const target = this.attr('href');
+      associatedLink.toggleClass('hovered', isHover);
+      associatedInfo.toggleClass('hovered', isHover);
+    }
   
-      group.find('.collapse').not(target).collapse('hide');
-    });
-  });
-  
-  document.addEventListener('DOMContentLoaded', function() {
-    // Function to hide all g-col-8 divs
-    function hideAllCols() {
-      document.querySelectorAll('.g-col-8').forEach(function(col) {
-        col.style.display = 'none';
+    // Click Handlers
+    function addClickHandlers() {
+      $('.info').click(function() {
+        window.location.href = $(this).attr('href');
       });
     }
   
-    // Initially hide all g-col-8 divs except the first one
-    hideAllCols();
-    document.querySelector('.g-col-8#dallas').style.display = 'block'; // Adjust the selector if necessary
+    // Collapse Handlers
+    function addCollapseHandlers() {
+      $('.list-group-item-action').click(function() {
+        const $this = $(this);
+        const group = $this.closest('.list-group'); 
+        const targetId = $this.data('bs-target') || $this.attr('href').split('#')[1]; 
+        const $target = $(`#${targetId}`); // Get the target collapsible element
   
-    // Add change event listener to each radio button
-    document.querySelectorAll('.btn-check').forEach(function(btn) {
-      btn.addEventListener('change', function() {
-        // Hide all g-col-8 divs
-        hideAllCols();
-  
-        // Display the selected g-col-8
-        const selectedColId = this.id;
-        document.querySelector(`.g-col-8#${selectedColId}`).style.display = 'block'; // Ensure this matches your HTML structure
+        group.find('.collapse').each(function() {
+          const $collapsible = $(this);
+          if ($collapsible.attr('id') !== targetId) {
+            $collapsible.collapse('hide'); 
+          } else if ($collapsible.hasClass('show')) { 
+            // If already open, don't do anything
+          } else {
+            $target.collapse('show'); // Open only if not already open
+          }
+        });
       });
+    }
+  
+    // Toggle Content
+    function toggleContent(selectedId) {
+      $("#dallas, #dallaspeers, #compareall").hide();
+      $("#" + selectedId).show();
+    }
+  
+    // Initial display & Event Listener (no changes needed)
+    toggleContent('dallas'); 
+    $('.btn-group-toggle input[type="radio"]').on('change', function() {
+      const selectedId = $(this).attr('id').slice(4);
+      toggleContent(selectedId);
     });
+  
+    // Execute on DOM ready
+    addHoverEffect();
+    addClickHandlers();
+    addCollapseHandlers();
   });
 
 </script>

@@ -11,6 +11,7 @@ library(sf)
 library(leaflet)
 library(kableExtra)
 library(cpaltemplates)
+library(highcharter)
 
 city_list <- list("Dallas, TX", "San Diego, CA", "Austin, TX", "Charlotte, NC", "Washington, DC", "Phoenix, AZ", "San Antonio, TX", "Atlanta, GA", "Houston, TX", "Miami, FL", "Philadelphia, PA")
 
@@ -249,26 +250,103 @@ dallas_tracts <- sf::st_join(acs_tract, acs_place, sf::st_intersects, suffix = c
 # %>%  pivot_longer(4:(which(names(.) == "GEOID_DAL") - 1), names_to = "variable")
 
 bounds <- as.vector(sf::st_bbox(dallas_tracts))
+# hi taylor
 
+#### palettes ####
+
+palette <- cpaltemplates::palette_cpal_main
+palette <- c(palette[-1], palette[1])
+
+palettes <- lapply(palette, function(color, n = 5) {colorRampPalette(c("#FFFFFF", color))(n)}, n = 5)
+
+binning <- function(n, color) {
+  list(values = colorBin(
+          bins = 5,
+          palettes[[color]],
+          na.color = "#333333",
+          domain = metrics$sdf[[n]]$all,
+          pretty = TRUE
+        )(metrics$sdf[[n]]$all),
+       breaks = classInt::classIntervals(
+          metrics$sdf[[n]]$all,
+          n = 5,
+          style = "pretty"
+       )$brks
+  )
+}
+
+#### bins_hc ####
+
+hc_cpal <- hc_theme(
+        chart = list(
+          backgroundColor = 'transparent',
+          style = list(
+            fontFamily = "Inter"
+          )
+        )
+      )
+
+bins_hc <- function(n, color, title = NULL, bin_labels = NULL, pct = FALSE, hover = NULL, axis_label = NULL) {
+  
+  color = if (color %% 8 == 0) {8} else {color %% 8}
+  
+  bin_data <- binning(n, color)
+  breaks <- bin_data$breaks
+  
+  if (!is.null(bin_labels)) bin_labels <- bin_labels else if (pct) {bin_labels <- sapply(1:(length(breaks) - 1), function(i) paste(scales::percent(breaks[i]), scales::percent(breaks[i+1]), sep = "-"))} else {bin_labels <- sapply(1:(length(breaks) - 1), function(i) paste(breaks[i], breaks[i+1], sep = "-"))} %>% as.vector()
+  
+  bins <- bin_data$values %>% 
+    table() %>% 
+    as.data.frame() %>% 
+    filter(`.` != "#333333") %>%
+    mutate(color = factor(`.`, levels = palettes[[color]])) %>%
+    select(-`.`) %>%
+    arrange(color) %>%
+    bind_cols(label = bin_labels)
+ 
+  chart <- bins %>%
+    hchart(
+      'column',
+      hcaes(x = label, y = Freq, color = color)
+    ) %>%
+    hc_size(height = "25vh", width = "100%") %>%
+    hc_xAxis(title = FALSE, labels = list(enabled = TRUE), gridLineWidth = 0, reversed = TRUE) %>%  
+    # hc_yAxis(title = ifelse(is.null(axis_label), FALSE, list(text = axis_label)), labels = list(enabled = FALSE), gridLineWidth = 0) %>%  
+    hc_yAxis(title = list(text = axis_label), labels = list(enabled = FALSE), gridLineWidth = 0) %>%
+    hc_chart(plotBackgroundColor = NULL, plotBorderWidth = 0, spacing = 10, inverted=TRUE) %>%
+    hc_plotOptions(column = list(borderWidth = 1, borderColor = 'lightgrey', pointWidth = 30,
+                                 pointPadding = 0, groupPadding = 0),
+                   states = list(hover = list(
+                                      enabled = TRUE,
+                                      brightness = -0.2))
+                   ) %>%
+    hc_legend(enabled = FALSE) %>%
+    hc_tooltip(formatter = JS("function() {
+                return this.x + ': ' + this.y; 
+            }")) %>%
+    hc_title(text = title) %>%
+    hc_add_theme(hc_cpal)
+    
+
+  
+  chart
+}
 
 ```
 
 ```{=html}
-
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-
 <div class="column-screen-inset">
 
   <div class="centered">
     <div class="btn-group btn-group-toggle" data-toggle="buttons">
-      <input type="radio" class="btn-check" name="options" id="dallas" autocomplete="off" checked="true">
-      <label class="btn btn-secondary" for="dallas">Dallas</label>
-      
-      <input type="radio" class="btn-check" name="options" id="dallaspeers" autocomplete="off">
-      <label class="btn btn-secondary" for="dallaspeers">Dallas and Peers</label>
-      
-      <input type="radio" class="btn-check" name="options" id="compareall" autocomplete="off">
-      <label class="btn btn-secondary" for="compareall">Compare all</label>
+      <input type="radio" class="btn-check" name="options" id="btn-dallas" autocomplete="off" checked="true">
+      <label class="btn btn-secondary" for="btn-dallas">Dallas</label>
+  
+      <input type="radio" class="btn-check" name="options" id="btn-dallaspeers" autocomplete="off">
+      <label class="btn btn-secondary" for="btn-dallaspeers">Dallas and Peers</label>
+  
+      <input type="radio" class="btn-check" name="options" id="btn-compareall" autocomplete="off">
+      <label class="btn btn-secondary" for="btn-compareall">Compare all</label>
     </div>
   </div>
   
@@ -353,8 +431,8 @@ bounds <- as.vector(sf::st_bbox(dallas_tracts))
     
     <div class="g-col-8 card" id="dallas" style="margin-top: 3vh;">
       <div class="card-body">
-        <div class="grid" style="--bs-columns: 3;">
-          <div class="g-col-1">
+        <div class="grid" style="--bs-columns: 5;">
+          <div class="g-col-2">
             <h2 class="slim" id="overview">Overview</h2>
             <div class="accordion" id="overview">
               <div class="accordion-item">
@@ -432,7 +510,7 @@ bounds <- as.vector(sf::st_bbox(dallas_tracts))
               </div>
             </div>
           </div>
-          <div class="g-col-2">
+          <div class="g-col-3">
             <div class="card box-of-map">
 ```
   
@@ -594,8 +672,8 @@ leaflet(data = dallas_tracts,
         
         <hr/>
         
-        <div class="grid" style="--bs-columns: 3;">
-          <div class="g-col-1">
+        <div class="grid" style="--bs-columns: 5;">
+          <div class="g-col-2">
             <h2 class="slim" id="human-development">Human Development</h2>
             <div class="accordion" id="human-development">
               <div class="accordion-item">
@@ -607,25 +685,45 @@ leaflet(data = dallas_tracts,
                 <div id="hqa" class="accordion-collapse collapse show" data-bs-parent="#human-development">
                   <div class="accordion-body">
                       
-                    <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
+                    <a href="#overcrowdedDetails" class="list-group-item list-group-item-action" aria-expanded="false" data-bs-toggle="collapse">
                       <div class="button-content" id="overcrowded-housing">
-                        <span>Overcrowded housing</span>
+                        <span>Overcrowded housing (%)</span>
+                        <div class="button-content-details" id="overcrowdedDetails">
+                          <div class="histogram card">
+                          
+```
+
+```{r}
+bins_hc(n=1, color=1, title = NULL, bin_labels = NULL, pct = TRUE, axis_label = "Num. tracts")
+```
+
+```{=html}
+                          </div>
+                        </div>
                       </div>
                     </a>
                     
-                    <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
+                    <a href="#rentburdenDetails" class="list-group-item list-group-item-action" aria-expanded="false" data-bs-toggle="collapse">
                       <div class="button-content" id="rent-burden">
-                        <span class="left-content">Rent burden</span>
-                        <!-- <span class="right-content"> -->
-                        </span>
+                        <span>Rent burden</span>
+                        <div class="button-content-details" id="rentburdenDetails">
+                          <div class="histogram card">
+                          
+```
+
+```{r}
+bins_hc(n=2, color=2, title = NULL, bin_labels = NULL, pct = TRUE, axis_label = "Num. PUMAs")
+```
+
+```{=html}
+                          </div>
+                        </div>
                       </div>
                     </a>
                     
-                    <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
+                    <a href="#unhousedratesDetails" class="list-group-item list-group-item-action" aria-expanded="false">
                       <div class="button-content" id="unhoused-rates">
-                        <span class="left-content">Unhoused rates</span>
-                        <!-- <span class="right-content"> -->
-                        </span>
+                        <span>Unhoused rates</span>
                       </div>
                     </a>
                       
@@ -641,27 +739,45 @@ leaflet(data = dallas_tracts,
                 <div id="hfi" class="accordion-collapse collapse" data-bs-parent="#human-development">
                   <div class="accordion-body">
                       
-                    <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
+                    <a href="#uninsuredDetails" class="list-group-item list-group-item-action" aria-expanded="false" data-bs-toggle="collapse">
                       <div class="button-content" id="uninsured-population">
-                        <span class="left-content">Uninsured population</span>
-                        <!-- <span class="right-content"> -->
-                        </span>
+                        <span>Uninsured population</span>
+                        <div class="button-content-details" id="uninsuredDetails">
+                          <div class="histogram card">
+                          
+```
+
+```{r}
+bins_hc(n=4, color=4, title = NULL, bin_labels = NULL, pct = TRUE, axis_label = "Num. tracts")
+```
+
+```{=html}
+                          </div>
+                        </div>
                       </div>
                     </a>
                     
-                    <a href="#" class="list-group-item list-group-item-action disabled" aria-expanded="false" aria-disabled="true">
+                    <a href="#lifeexpDetails" class="list-group-item list-group-item-action disabled" aria-expanded="false" aria-disabled="true">
                       <div class="button-content" id="life-expectancy">
-                        <span class="left-content">Life expectancy</span>
-                        <!-- <span class="right-content"> -->
-                        </span>
+                        <span>Life expectancy</span>
                       </div>
                     </a>
                     
-                    <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
+                    <a href="#healthindexDetails" class="list-group-item list-group-item-action" aria-expanded="false" data-bs-toggle="collapse">
                       <div class="button-content" id="health-index">
-                        <span class="left-content">Health index</span>
-                        <!-- <span class="right-content"> -->
-                        </span>
+                        <span>Health index</span>
+                        <div class="button-content-details" id="healthindexDetails">
+                          <div class="histogram card">
+                          
+```
+
+```{r}
+bins_hc(n=6, color=6, title = NULL, bin_labels = NULL, pct = FALSE, axis_label = "Num. tracts")
+```
+
+```{=html}
+                          </div>
+                        </div>
                       </div>
                     </a>
                     
@@ -677,43 +793,81 @@ leaflet(data = dallas_tracts,
                 <div id="trn" class="accordion-collapse collapse" data-bs-parent="#human-development">
                   <div class="accordion-body">
                       
-                    <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
+                    <a href="#longpubDetails" class="list-group-item list-group-item-action" aria-expanded="false" data-bs-toggle="collapse">
                       <div class="button-content" id="pub-commute-long">
                         <span class="left-content">Long public commute</span>
-                        <!-- <span class="right-content"> -->
-                        </span>
+                        <div class="button-content-details" id="longpubDetails">
+                          <div class="histogram card">
+                          
+```
+
+```{r}
+bins_hc(n=7, color=7, title = NULL, bin_labels = NULL, pct = TRUE, axis_label = "Num. PUMAs")
+```
+
+```{=html}
+                          </div>
+                        </div>
                       </div>
                     </a>
                     
-                    <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
+                    <a href="#longprivDetails" class="list-group-item list-group-item-action" aria-expanded="false" data-bs-toggle="collapse">
                       <div class="button-content" id="priv-commute-long">
                         <span class="left-content">Long private commute</span>
-                        <!-- <span class="right-content"> -->
-                        </span>
+                        <div class="button-content-details" id="longprivDetails">
+                          <div class="histogram card">
+                          
+```
+
+```{r}
+bins_hc(n=8, color=8, title = NULL, bin_labels = NULL, pct = TRUE, axis_label = "Num. PUMAs")
+```
+
+```{=html}
+                          </div>
+                        </div>
                       </div>
                     </a>
                     
-                    <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
+                    <a href="#pubcomDetails" class="list-group-item list-group-item-action" aria-expanded="false" data-bs-toggle="collapse">
                       <div class="button-content" id="pub-commute">
                         <span class="left-content">Public commuters</span>
-                        <!-- <span class="right-content"> -->
-                        </span>
+                        <div class="button-content-details" id="pubcomDetails">
+                          <div class="histogram card">
+                          
+```
+
+```{r}
+bins_hc(n=9, color=9, title = NULL, bin_labels = NULL, pct = TRUE, axis_label = "Num. PUMAs")
+```
+
+```{=html}
+                          </div>
+                        </div>
                       </div>
                     </a>
                     
-                    <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
+                    <a href="#privcomDetails" class="list-group-item list-group-item-action" aria-expanded="false" data-bs-toggle="collapse">
                       <div class="button-content" id="priv-commute">
                         <span class="left-content">Private commuters</span>
-                        <!-- <span class="right-content"> -->
-                        </span>
+<div class="button-content-details" id="privcomDetails">
+                          <div class="histogram card">
+                          
+```
+
+```{r}
+bins_hc(n=10, color=10, title = NULL, bin_labels = NULL, pct = TRUE, axis_label = "Num. PUMAs")
+```
+
+```{=html}
+                          </div>
+                        </div>
                       </div>
                     </a>
                     
-                    <a href="#" class="list-group-item list-group-item-action" aria-expanded="false">
+                    <a href="#novehDetails" class="list-group-item list-group-item-action" aria-expanded="false" data-bs-toggle="collapse">
                       <div class="button-content" id="no-vehicle">
                         <span class="left-content">Households with no vehicle</span>
-                        <!-- <span class="right-content"> -->
-                        </span>
                       </div>
                     </a>
                     
@@ -722,15 +876,15 @@ leaflet(data = dallas_tracts,
               </div>
             </div>
           </div>
-          <div class="g-col-2">
+          <div class="g-col-3">
             <div class="card box-of-map">
 ```
   
   
-```{r metrics-map}
+```{r map-hd}
 
 leaflet(data = dallas_smallgeo, 
-        elementId = "map_metrics",
+        elementId = "map-hd",
         options = leafletOptions(
                zoomSnap = 0.5,
                zoomDelta = 0.5,
@@ -739,7 +893,7 @@ leaflet(data = dallas_smallgeo,
                )) %>%
   
   # Add base
-  addTiles(urlTemplate = cpaltemplates::cpal_mapbox_color, attribution = cpaltemplates::cpal_leaflet) %>%
+  addTiles(urlTemplate = cpaltemplates::cpal_mapbox_mono, attribution = cpaltemplates::cpal_leaflet) %>%
   
   # City outline default
   addPolygons(
@@ -765,69 +919,67 @@ leaflet(data = dallas_smallgeo,
   addPolygons(
     group = "overcrowded-housing",
     data = metrics$sdf[[1]],
-    fillColor = ~colorNumeric(palette = palette_cpal_teal, domain = c(0, max(metrics$sdf[[1]]$all, na.rm = TRUE) ))(all),
-    fillOpacity = ~0.6 * (all - min(metrics$sdf[[1]]$all, na.rm = TRUE)) / max(metrics$sdf[[1]]$all, na.rm = TRUE) + 0.2, 
-    weight = 1,
-    color = "#FFFFFF", 
-    # dashArray = "3",
-    label = lapply(1:nrow(metrics$sdf[[1]]), function(i) {
-      htmltools::HTML(paste0(
-        "<i>", metrics$sdf[[1]]$NAME[i], "</i><br/>",
-        "<b>Pct in overcrowded housing:</b> ", scales::percent(metrics$sdf[[1]]$all[i])
-      ))
-    }),
-    labelOptions = labelOptions(direction = 'auto', html = TRUE)
-  ) %>%
+    fillColor = ~colorBin(palette = palettes[[1]], domain = c(0, max(metrics$sdf[[1]]$all, na.rm = TRUE)))(all),
+    fillOpacity = 0.5, 
+    stroke = TRUE, color = "#333333", weight = 1.5, opacity = 0.1,
+    highlight = highlightOptions(
+                opacity = 0.5,
+                bringToFront = TRUE,
+                sendToBack = TRUE),
+    popup =
+      paste0(
+        "<i>", metrics$sdf[[1]]$NAME, "</i><br/>",
+        "<b>Pct in overcrowded housing:</b> ", scales::percent(metrics$sdf[[1]]$all, accuracy = 0.1)
+      )
+    ) %>%
   
   addPolygons(
     group = "rent-burden",
     data = metrics$sdf[[2]],
-    fillColor = ~colorNumeric(palette = palette_cpal_magenta, domain = c(0, max(metrics$sdf[[2]]$all, na.rm = TRUE) ))(all),
-    fillOpacity = ~0.6 * (all - min(metrics$sdf[[2]]$all, na.rm = TRUE)) / max(metrics$sdf[[2]]$all, na.rm = TRUE) + 0.2,
-    weight = 1,
-    color = "#FFFFFF",
-    # dashArray = "3",
-    label = lapply(1:nrow(metrics$sdf[[2]]), function(i) {
-      htmltools::HTML(paste0(
-        "<i>", metrics$sdf[[2]]$NAME[i], "</i><br/>",
-        "<b>Pct households with rent more than 30% of income:</b> ", scales::percent(metrics$sdf[[2]]$all[i])
-      ))
-    }),
-    labelOptions = labelOptions(direction = 'auto', html = TRUE)
-  ) %>%
+    fillColor = ~colorNumeric(palette = palettes[[2]], domain = c(0, max(metrics$sdf[[2]]$all, na.rm = TRUE) ))(all),
+    fillOpacity = 0.5,
+    stroke = TRUE, color = "#333333", weight = 1.5, opacity = 0.1,
+     highlight = highlightOptions(
+                opacity = 0.5,
+                bringToFront = TRUE,
+                sendToBack = TRUE),
+    popup = 
+      paste0(
+        "<i>", metrics$sdf[[2]]$NAME, "</i><br/>",
+        "<b>Pct households with rent more than 30% of income:</b> ", scales::percent(metrics$sdf[[2]]$all, accuracy = 0.1)
+      )
+    ) %>%
 
   addPolygons(
     group = "unhoused-rates",
     data = metrics$sdf[[3]],
-    fillColor = ~colorNumeric(palette = palette_cpal_yellow, domain = c(0, max(metrics$sdf[[3]]$all, na.rm = TRUE) ))(all),
-    fillOpacity = ~0.6 * (all - min(metrics$sdf[[3]]$all, na.rm = TRUE)) / max(metrics$sdf[[3]]$all, na.rm = TRUE) + 0.2,
-    weight = 1,
-    color = "#FFFFFF",
-    # dashArray = "3",
-    label = lapply(1:nrow(metrics$sdf[[3]]), function(i) {
-      htmltools::HTML(paste0(
-        "<i>", metrics$sdf[[3]]$NAME[i], "</i><br/>",
-        "<b>Pct individuals experiencing homelessness:</b> ", scales::percent(metrics$sdf[[3]]$all[i], accuracy = 0.0001)
-      ))
-    }),
-    labelOptions = labelOptions(direction = 'auto', html = TRUE)
+    fillColor = ~colorNumeric(palette = palettes[[3]], domain = c(0, max(metrics$sdf[[3]]$all, na.rm = TRUE) ))(all),
+    fillOpacity = 0.5, 
+    stroke = TRUE, color = "#333333", weight = 1.5, opacity = 0.1,
+    highlight = highlightOptions(
+                opacity = 0.5,
+                bringToFront = TRUE,
+                sendToBack = TRUE),
+    popup = paste0(
+        "<i>", metrics$sdf[[3]]$NAME, "</i><br/>",
+        "<b>Pct individuals experiencing homelessness:</b> ", scales::percent(metrics$sdf[[3]]$all, accuracy = 0.1)
+      )
   ) %>%
   
   addPolygons(
     group = "uninsured-population",
     data = metrics$sdf[[4]],
-    fillColor = ~colorNumeric(palette = palette_cpal_green, domain = c(0, max(metrics$sdf[[4]]$all, na.rm = TRUE) ))(all),
-    fillOpacity = ~0.6 * (all - min(metrics$sdf[[4]]$all, na.rm = TRUE)) / max(metrics$sdf[[4]]$all, na.rm = TRUE) + 0.2,
-    weight = 1,
-    color = "#FFFFFF",
-    # dashArray = "3",
-    label = lapply(1:nrow(metrics$sdf[[4]]), function(i) {
-      htmltools::HTML(paste0(
-        "<i>", metrics$sdf[[4]]$NAME[i], "</i><br/>",
-        "<b>Pct individuals uninsured:</b> ", scales::percent(metrics$sdf[[4]]$all[i])
-      ))
-    }),
-    labelOptions = labelOptions(direction = 'auto', html = TRUE)
+    fillColor = ~colorNumeric(palette = palettes[[4]], domain = c(0, max(metrics$sdf[[4]]$all, na.rm = TRUE) ))(all),
+    fillOpacity = 0.5, 
+    stroke = TRUE, color = "#333333", weight = 1.5, opacity = 0.1,
+    highlight = highlightOptions(
+                opacity = 0.5,
+                bringToFront = TRUE,
+                sendToBack = TRUE),
+    popup = paste0(
+        "<i>", metrics$sdf[[4]]$NAME, "</i><br/>",
+        "<b>Pct individuals uninsured:</b> ", scales::percent(metrics$sdf[[4]]$all, accuracy = 0.1)
+      )
   ) %>%
   # 
   # addPolygons(
@@ -840,8 +992,8 @@ leaflet(data = dallas_smallgeo,
   #   # dashArray = "3",
   #   label = lapply(1:nrow(metrics$sdf[[5]]), function(i) {
   #     htmltools::HTML(paste0(
-  #       "<i>", metrics$sdf[[5]]$NAME[i], "</i><br/>",
-  #       "<b>Life expectancy:</b> ", scales::percent(metrics$sdf[[5]]$all[i])
+  #       "<i>", metrics$sdf[[5]]$NAME, "</i><br/>",
+  #       "<b>Life expectancy:</b> ", scales::percent(metrics$sdf[[5]]$all)
   #     ))
   #   }),
   #   labelOptions = labelOptions(direction = 'auto', html = TRUE)
@@ -851,88 +1003,83 @@ leaflet(data = dallas_smallgeo,
   addPolygons(
     group = "health-index",
     data = metrics$sdf[[6]],
-    fillColor = ~colorNumeric(palette = palette_cpal_purple, domain = c(min(metrics$sdf[[6]]$all, na.rm = TRUE), max(metrics$sdf[[6]]$all, na.rm = TRUE) ), na.color = "#a4a6ab")(all),
-    fillOpacity = ~ 0.6 * ((all - min(metrics$sdf[[6]]$all, na.rm = TRUE)) / max(metrics$sdf[[6]]$all, na.rm = TRUE)) + 0.2,
-    weight = 1,
-    color = "#FFFFFF",
-    # dashArray = "3",
-    label = lapply(1:nrow(metrics$sdf[[6]]), function(i) {
-      htmltools::HTML(paste0(
-        "<i>", metrics$sdf[[6]]$NAME[i], "</i><br/>",
-        "<b>Health index:</b> ", scales::number(metrics$sdf[[6]]$all[i], accuracy = 0.001), "<br/>",
+    fillColor = ~colorNumeric(palette = palettes[[6]], domain = c(min(metrics$sdf[[6]]$all, na.rm = TRUE), max(metrics$sdf[[6]]$all, na.rm = TRUE) ), na.color = "#a4a6ab")(all),
+    fillOpacity = 0.5, 
+    stroke = TRUE, color = "#333333", weight = 1.5, opacity = 0.1,
+    highlight = highlightOptions(
+                opacity = 0.5,
+                bringToFront = TRUE,
+                sendToBack = TRUE),
+    popup = paste0(
+        "<i>", metrics$sdf[[6]]$NAME, "</i><br/>",
+        "<b>Health index:</b> ", scales::number(metrics$sdf[[6]]$all, accuracy = 0.001), "<br/>",
         "<br/>",
         "<i><sup>*Lower index score is better</sup></i>"
-      ))
-    }),
-    labelOptions = labelOptions(direction = 'auto', html = TRUE)
+      )
   ) %>%
 
   addPolygons(
     group = "pub-commute-long",
     data = metrics$sdf[[7]],
-    fillColor = ~colorNumeric(palette = palette_cpal_purple, domain = c(min(metrics$sdf[[7]]$all, na.rm = TRUE), max(metrics$sdf[[7]]$all, na.rm = TRUE) ), na.color = "#a4a6ab")(all),
-    fillOpacity = ~ 0.6 * ((all - min(metrics$sdf[[7]]$all, na.rm = TRUE)) / max(metrics$sdf[[7]]$all, na.rm = TRUE)) + 0.2,
-    weight = 1,
-    color = "#FFFFFF",
-    # dashArray = "3",
-    label = lapply(1:nrow(metrics$sdf[[7]]), function(i) {
-      htmltools::HTML(paste0(
-        "<i>", metrics$sdf[[7]]$NAME[i], "</i><br/>",
-        "<b>Percent longer public commute than 45 min.:</b> ", scales::percent(metrics$sdf[[7]]$all[i], accuracy = 0.1)
-      ))
-    }),
-    labelOptions = labelOptions(direction = 'auto', html = TRUE)
+    fillColor = ~colorNumeric(palette = palettes[[7]], domain = c(min(metrics$sdf[[7]]$all, na.rm = TRUE), max(metrics$sdf[[7]]$all, na.rm = TRUE) ), na.color = "#a4a6ab")(all),
+    fillOpacity = 0.5, 
+    stroke = TRUE, color = "#333333", weight = 1.5, opacity = 0.1,
+    highlight = highlightOptions(
+                opacity = 0.5,
+                bringToFront = TRUE,
+                sendToBack = TRUE),
+    popup = paste0(
+        "<i>", metrics$sdf[[7]]$NAME, "</i><br/>",
+        "<b>Percent longer public commute than 45 min.:</b> ", scales::percent(metrics$sdf[[7]]$all, accuracy = 0.1)
+      )
   ) %>%
   
   addPolygons(
     group = "priv-commute-long",
     data = metrics$sdf[[8]],
-    fillColor = ~colorNumeric(palette = palette_cpal_purple, domain = c(min(metrics$sdf[[8]]$all, na.rm = TRUE), max(metrics$sdf[[8]]$all, na.rm = TRUE) ), na.color = "#a4a6ab")(all),
-    fillOpacity = ~ 0.6 * ((all - min(metrics$sdf[[8]]$all, na.rm = TRUE)) / max(metrics$sdf[[8]]$all, na.rm = TRUE)) + 0.2,
-    weight = 1,
-    color = "#FFFFFF",
-    # dashArray = "3",
-    label = lapply(1:nrow(metrics$sdf[[8]]), function(i) {
-      htmltools::HTML(paste0(
-        "<i>", metrics$sdf[[8]]$NAME[i], "</i><br/>",
-        "<b>Percent longer private commute than 45 min.:</b> ", scales::percent(metrics$sdf[[8]]$all[i], accuracy = 0.1)
-      ))
-    }),
-    labelOptions = labelOptions(direction = 'auto', html = TRUE)
+    fillColor = ~colorNumeric(palette = palettes[[8]], domain = c(min(metrics$sdf[[8]]$all, na.rm = TRUE), max(metrics$sdf[[8]]$all, na.rm = TRUE) ), na.color = "#a4a6ab")(all),
+    fillOpacity = 0.5, 
+    stroke = TRUE, color = "#333333", weight = 1.5, opacity = 0.1,
+    highlight = highlightOptions(
+                opacity = 0.5,
+                bringToFront = TRUE,
+                sendToBack = TRUE),
+    popup = paste0(
+        "<i>", metrics$sdf[[8]]$NAME, "</i><br/>",
+        "<b>Percent longer private commute than 45 min.:</b> ", scales::percent(metrics$sdf[[8]]$all, accuracy = 0.1)
+      )
   ) %>%
   
   addPolygons(
     group = "pub-commute",
     data = metrics$sdf[[9]],
-    fillColor = ~colorNumeric(palette = palette_cpal_purple, domain = c(min(metrics$sdf[[9]]$all, na.rm = TRUE), max(metrics$sdf[[9]]$all, na.rm = TRUE) ), na.color = "#a4a6ab")(all),
-    fillOpacity = ~ 0.6 * ((all - min(metrics$sdf[[9]]$all, na.rm = TRUE)) / max(metrics$sdf[[9]]$all, na.rm = TRUE)) + 0.2,
-    weight = 1,
-    color = "#FFFFFF",
-    # dashArray = "3",
-    label = lapply(1:nrow(metrics$sdf[[9]]), function(i) {
-      htmltools::HTML(paste0(
-        "<i>", metrics$sdf[[9]]$NAME[i], "</i><br/>",
-        "<b>Percent using public commute:</b> ", scales::percent(metrics$sdf[[9]]$all[i], accuracy = 0.1)
-      ))
-    }),
-    labelOptions = labelOptions(direction = 'auto', html = TRUE)
+    fillColor = ~colorNumeric(palette = palettes[[1]], domain = c(min(metrics$sdf[[9]]$all, na.rm = TRUE), max(metrics$sdf[[9]]$all, na.rm = TRUE) ), na.color = "#a4a6ab")(all),
+    fillOpacity = 0.5, 
+    stroke = TRUE, color = "#333333", weight = 1.5, opacity = 0.1,
+    highlight = highlightOptions(
+                opacity = 0.5,
+                bringToFront = TRUE,
+                sendToBack = TRUE),
+    popup = paste0(
+        "<i>", metrics$sdf[[9]]$NAME, "</i><br/>",
+        "<b>Percent using public commute:</b> ", scales::percent(metrics$sdf[[9]]$all, accuracy = 0.1)
+      )
   ) %>%
   
   addPolygons(
     group = "priv-commute",
     data = metrics$sdf[[10]],
-    fillColor = ~colorNumeric(palette = palette_cpal_purple, domain = c(min(metrics$sdf[[10]]$all, na.rm = TRUE), max(metrics$sdf[[10]]$all, na.rm = TRUE) ), na.color = "#a4a6ab")(all),
-    fillOpacity = ~ 0.6 * ((all - min(metrics$sdf[[10]]$all, na.rm = TRUE)) / max(metrics$sdf[[10]]$all, na.rm = TRUE)) + 0.2,
-    weight = 1,
-    color = "#FFFFFF",
-    # dashArray = "3",
-    label = lapply(1:nrow(metrics$sdf[[10]]), function(i) {
-      htmltools::HTML(paste0(
-        "<i>", metrics$sdf[[10]]$NAME[i], "</i><br/>",
-        "<b>Percent using public commute:</b> ", scales::percent(metrics$sdf[[10]]$all[i], accuracy = 0.1)
-      ))
-    }),
-    labelOptions = labelOptions(direction = 'auto', html = TRUE)
+    fillColor = ~colorNumeric(palette = palettes[[2]], domain = c(min(metrics$sdf[[10]]$all, na.rm = TRUE), max(metrics$sdf[[10]]$all, na.rm = TRUE) ), na.color = "#a4a6ab")(all),
+    fillOpacity = 0.5, 
+    stroke = TRUE, color = "#333333", weight = 1.5, opacity = 0.1,
+    highlight = highlightOptions(
+                opacity = 0.5,
+                bringToFront = TRUE,
+                sendToBack = TRUE),
+    popup = paste0(
+        "<i>", metrics$sdf[[10]]$NAME, "</i><br/>",
+        "<b>Percent using public commute:</b> ", scales::percent(metrics$sdf[[10]]$all, accuracy = 0.1)
+      )
   ) %>%
   
   # Map bounds
@@ -1015,7 +1162,7 @@ leaflet(data = dallas_smallgeo,
       </div>
     </div>
     
-    <div class="g-col-8 card" id="dallaspeers" style="height: 100vh; overflow-y: auto; margin-top: 3vh;">
+    <div class="g-col-8 card" id="dallaspeers" style="height: 100vh; overflow-y: auto; margin-top: 3vh; display: none;"> 
       <div class="card-body">
         
 ```     
@@ -1079,7 +1226,7 @@ for(system in peer_medians %>% distinct(System) %>% pull()) {
     </div>
     
     
-    <div class="g-col-8" id="compareall" style="height: 100vh; overflow-y: auto;">
+    <div class="g-col-8" id="compareall" style="height: 100vh; overflow-y: auto; display: none;">
     
       <div style="margin: 3vh;"></div>
       
