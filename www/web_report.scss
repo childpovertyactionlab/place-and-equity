@@ -485,6 +485,12 @@ h6 {
   }
 }
 
+.lock-column {
+    position: sticky; /* Key property */
+    left: 0;          /* Stick to the left side */
+    z-index: 2;       /* Ensure it stays on top of other content */
+}
+
 .grid-item-empty {
   background-color: $teal-900;
   color: white;
