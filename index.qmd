@@ -351,6 +351,31 @@ bins_hc <- function(n, color, title = NULL, bin_labels = NULL, pct = FALSE, hove
 ```
 
 ```{=html}
+
+<div class="modal fade" id="tutorialModal" tabindex="-1" aria-labelledby="tutorialModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tutorialModalLabel">Welcome to the Place & Equity tool</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>This proof of concept uses multifaceted data to visually summarize disparities in Dallas. By pulling across many areas of study, it highlights underserved areas in Dallas and also measures Dallas against comparable peer cities.</p>
+                <h6>Dallas</h6>
+                <p>This tab shows metrics at the smallest possible geography. Click a metric to see it displayed on the map.</p>
+                <h6>Dallas and Peers</h6>
+                <p>This tab compares Dallas to 10 peer cities. "Dallas" shows the total metric in Dallas, and "Dallas Rank" places Dallas out of 11 peers. "Peer Median" shows the median metric among peers, and "Best Peer" is the best metric among peers.</p>
+                <h6>Compare all</h6>
+                <p>This tab is under development.</p>
+            </div>
+            <div class="modal-footer">
+                <p class="text-muted" style="font-size: small;">To reopen this popup, click <i class="bi bi-info-circle-fill" style="color: var(--bs-secondary);"></i></p>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="column-screen-inset">
 
   <div class="centered">
@@ -364,6 +389,11 @@ bins_hc <- function(n, color, title = NULL, bin_labels = NULL, pct = FALSE, hove
       <input type="radio" class="btn-check" name="options" id="btn-compareall" autocomplete="off">
       <label class="btn btn-secondary" for="btn-compareall">Compare all</label>
     </div>
+    
+    <div style="margin: 0 10px;">
+      <i class="bi bi-info-circle-fill" style="font-size: 1.5rem; color: var(--bs-secondary);" data-bs-toggle="modal" data-bs-target="#tutorialModal" role="button" aria-label="Open tutorial"></i>
+    </div>
+    
   </div>
   
   <div class="grid" style="--bs-gap: 2rem;">
