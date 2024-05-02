@@ -365,8 +365,8 @@ bins_hc <- function(n, color, title = NULL, bin_labels = NULL, pct = FALSE, hove
                 <p>This tab shows metrics at the smallest possible geography. Click a metric to see it displayed on the map.</p>
                 <h6>Dallas and Peers</h6>
                 <p>This tab compares Dallas to 10 peer cities. "Dallas" shows the total metric in Dallas, and "Dallas Rank" places Dallas out of 11 peers. "Peer Median" shows the median metric among peers, and "Best Peer" is the best metric among peers.</p>
-                <h6>Compare all</h6>
-                <p>This tab is under development.</p>
+                <!-- <h6>Compare all</h6> -->
+                <!-- <p>This tab is under development.</p> -->
             </div>
             <div class="modal-footer">
                 <p class="text-muted" style="font-size: small;">To reopen this popup, click <i class="bi bi-info-circle-fill" style="color: var(--bs-secondary);"></i></p>
@@ -386,8 +386,8 @@ bins_hc <- function(n, color, title = NULL, bin_labels = NULL, pct = FALSE, hove
       <input type="radio" class="btn-check" name="options" id="btn-dallaspeers" autocomplete="off">
       <label class="btn btn-secondary" for="btn-dallaspeers">Dallas and Peers</label>
   
-      <input type="radio" class="btn-check" name="options" id="btn-compareall" autocomplete="off">
-      <label class="btn btn-secondary" for="btn-compareall">Compare all</label>
+      <!-- <input type="radio" class="btn-check" name="options" id="btn-compareall" autocomplete="off"> -->
+      <!-- <label class="btn btn-secondary" for="btn-compareall">Compare all</label> -->
     </div>
     
     <div style="margin: 0 10px;">
@@ -1191,39 +1191,39 @@ for(system in peer_medians %>% distinct(System) %>% pull()) {
     </div>
     
     
-    <div class="g-col-8" id="compareall" style="height: 100vh; overflow-y: auto; display: none;">
-    
-      <div style="margin: 3vh;"></div>
+    <!-- <div class="g-col-8" id="compareall" style="height: 100vh; overflow-y: auto; display: none;"> -->
+
+    <!--   <div style="margin: 3vh;"></div> -->
       
 ```
 
 
-::: {.callout-note appearance="simple" style="width: 50%; margin: auto;"}
+<!-- ::: {.callout-note appearance="simple" style="width: 50%; margin: auto;"} -->
 
-This tool is under continuous development...check back later for more!
+<!-- This tool is under continuous development...check back later for more! -->
 
-:::
+<!-- ::: -->
 
 ```{=html}
     
-    </div>
+    <!-- </div> -->
     
     
     <div class="g-col-2" style="height: 100vh; overflow-y: auto;">
     
-      <div class="card text-bg-info mb-3" style="max-width: 24rem">
-      
-        <div style="font-size: 24px; text-align: center; margin: 5px; margin-top: 15px">
-          <b><i class="bi bi-info-circle-fill"></i>  Sorry for the mess.</b>
-        </div>
-        
-        <div class="card-body">
-          
-          <p class="card-text">This tool is under development, so many intended features and functionalities remain missing. Feedback is appreciated.</p>
-        
-        </div>
-      
-      </div>
+      <!-- <div class="card text-bg-info mb-3" style="max-width: 24rem"> -->
+
+      <!--   <div style="font-size: 24px; text-align: center; margin: 5px; margin-top: 15px"> -->
+      <!--     <b><i class="bi bi-info-circle-fill"></i>  Sorry for the mess.</b> -->
+      <!--   </div> -->
+
+      <!--   <div class="card-body"> -->
+
+      <!--     <p class="card-text">This tool is under development, so many intended features and functionalities remain missing. Feedback is appreciated.</p> -->
+
+      <!--   </div> -->
+
+      <!-- </div> -->
     
     </div>
     
